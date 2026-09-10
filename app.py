@@ -6,7 +6,7 @@ from pptx import Presentation
 import requests
 import io
 
-# 1. Sayfa Yapılandırması ve Başlık
+# 1. Sayfa Yapılandırması
 st.set_page_config(
     page_title="IdeaStorm Robot Core",
     page_icon="🤖",
@@ -19,9 +19,6 @@ st.markdown("""
     <style>
     .main {
         background-color: #0e1117;
-    }
-    .stApp header {
-        background-color: transparent;
     }
     .hero-title {
         font-size: 2.6rem;
@@ -36,39 +33,34 @@ st.markdown("""
         color: #9CA3AF;
         margin-bottom: 2rem;
     }
-    .feature-card {
-        background-color: #1E293B;
-        border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 1.2rem;
-        margin-bottom: 1rem;
-    }
     </style>
-""", unsafe_allow_allow_html=True)
+""", unsafe_allow_html=True)
 
 # Başlık Alanı
 st.markdown('<div class="hero-title">🤖 IdeaStorm Robot Core</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-subtitle">Otonom Yapay Zeka Ajanı • Kodlama, Dokümantasyon ve Tek Tık Canlı Yayın</div>', unsafe_allow_html=True)
 
-# 3. Gemini API Bağlantısı (Secrets Üzerinden Arka Planda)
+# 3. Gemini API Bağlantısı (Secrets Güvenli Kontrolü)
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+elif "gemini_api_key" in st.secrets:
+    genai.configure(api_key=st.secrets["gemini_api_key"])
 else:
-    st.warning("⚠️ Sistem API Key bulunamadı. Lütfen Streamlit Secrets alanına GEMINI_API_KEY tanımlayın.")
+    st.info("💡 Sistem henüz varsayılan Gemini API Key ile bağlanmadı. Sol menüden kendi API Key'inizi girebilirsiniz.")
 
-# 4. Sol Menü Tasarımı (Kullanıcı Dostu Vercel Bağlantısı)
+# 4. Sol Menü Tasarımı
 with st.sidebar:
     st.image("https://img.icons8.com/fluency/96/bot.png", width=70)
     st.header("🚀 Canlı Yayın Modülü")
     st.write("Ürettiğiniz web projelerini anında kendi Vercel hesabınızda yayınlayın.")
     
     st.markdown("[🔗 Ücretsiz Vercel Token Al](https://vercel.com/account/tokens)")
-    vercel_token = st.sidebar.text_input("Vercel Token (Opsiyonel)", type="password", help="Projeleri canlıya almak için kendi Vercel token'ınızı girin.")
+    vercel_token = st.text_input("Vercel Token (Opsiyonel)", type="password", help="Projeleri canlıya almak için kendi Vercel token'ınızı girin.")
 
     st.divider()
     st.caption("IdeaStorm v2.0 • Sürdürülebilir BYOK Altyapısı")
 
-# 5. Yardımcı Fonksiyonlar (Doküman, Ses, Vercel API)
+# 5. Yardımcı Fonksiyonlar
 def create_word_doc(text):
     doc = Document()
     doc.add_heading('IdeaStorm - Proje Çıktısı', 0)
@@ -103,7 +95,7 @@ def deploy_to_vercel(project_name, html_content, token):
     res = requests.post(url, headers=headers, json=payload)
     return res.json()
 
-# 6. Sohbet Geçmişi ve Arayüz Akışı
+# 6. Sohbet Geçmişi
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -111,6 +103,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
+# 7. Kullanıcı Etkileşimi
 if prompt := st.chat_input("IdeaStorm'a bir proje fikri ver veya web sitesi oluşturmasını iste..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -118,7 +111,6 @@ if prompt := st.chat_input("IdeaStorm'a bir proje fikri ver veya web sitesi olu�
 
     with st.chat_message("assistant"):
         try:
-            # Sistem Talimatı (System Prompt)
             system_instruction = (
                 "Sen IdeaStorm Robot Core mimarisinin otonom yapay zeka ajanısın. "
                 "Kullanıcılara modern web projeleri, temiz kodlar, detaylı teknik raporlar üreten "
